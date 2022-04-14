@@ -31,7 +31,7 @@ Now we will load the dataset and split it into a training set and a validation s
                                as_supervised=True, batch_size=32)                           
 ```
 
-The next part is to set the callback object in order to save the Keras model or model weights at some frequency. This can easily be done using [ModelCheckPoint](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint):
+The next part is to set the callback object in order to save the Keras model or model weights at some frequency. This can easily be done using [ModelCheckPoint](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint) (check the link for a deeper description of the parameter settings):
 
 
 ```python
@@ -72,7 +72,7 @@ if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
 
 If no model exists already (i.e no training has been done yet), we simply define our model (MobileNetV3Small in our case) and compile then fit the model to the data for training.
 
-Whenever our training gets interuptted, the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
+Now whenever our training gets interuptted, the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
 
 Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main.py) in the repository to see the whole training script.
 
