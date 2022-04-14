@@ -3,7 +3,79 @@ Tutorial on training machine learning models on Azure spot instances as part of 
 
 ### Creating a training script with checkpointing
 
-... TODO ...
+There are 4 main steps to the training script:
+
+1.  Create a folder to save your model at some frequency (e.g after every epoch)
+2.  Load your dataset of interest
+3.  Specify the callback/checkpointing object (we used Keras callbacks)
+4.  Check if model already exits in folder (that you save your model to) and simply resuming training if model exists
+
+Firstly, we will create a folder called 'Saved_Model' in our working directory where we can store our saved models whenever training is interrupted. This can be made using:
+
+```console
+mkdir Saved_Model
+```
+
+For our training script example, we are going to use Tensorflow with Keras API to build a Convolutional Neural Network (CNN) on the following dataset (any other dataset of interest can be used): [horses_or_humans](https://www.tensorflow.org/datasets/catalog/horses_or_humans). 
+
+We will also use the 'MobileNetV3Small' architecture as it has over a million parameters to learn but any other keras model instance can be used. You can find this architecture under:
+
+```python
+tf.keras.applications.MobileNetV3Small
+```
+
+Now we will load the dataset and split it into a training set and a validation set using:
+
+```python
+(train_ds, val_ds) = tfds.load(name='horses_or_humans', split=['train', 'test'],
+                               as_supervised=True, batch_size=32)                           
+```
+
+The next part is to set the callback object in order to save the Keras model or model weights at some frequency. This can easily be done using [ModelCheckPoint](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint):
+
+
+```python
+checkpoint = tf.keras.callbacks.ModelCheckpoint(
+    filepath=os.path.join(os.getcwd(), 'Saved_Model', 'Models.{epoch}-{val_loss:.2f}.hdf5'),
+    monitor='val_loss',
+    verbose=0,
+    save_best_only=False,
+    save_weights_only=False,
+    mode='min',
+    save_freq='epoch',
+    options=None,
+    initial_value_threshold=None,
+)                           
+```
+
+When specifying the name of the saved model, 'Models.{epoch}-{val_loss:.2f}' in our case, it is important to include the .{epoch} part as this will later on be used to inform us of the epoch number when our model gets terminated. We also saved the file using the '.hdf5' extension such that the whole model is contained in a single file. We also save the model at every epoch as can be set by the 'save_freq' setting.
+
+Next is to check whether a model already exists in the 'Saved_Model' file and to simply resume training from there. We will also use a regular expression to extract the epoch number from the saved file name and then load the model to continue training from the last epoch before termination. 
+
+This can be done in the following way:
+
+```python
+# If model already exists, continue training
+if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
+
+    # Regular expression pattern to extract epoch number
+    pattern = '[^0-9]+([0-9]+).+'
+    filename = os.listdir(os.path.join(os.getcwd(), 'Saved_Model'))[-1]
+
+    # Find epoch number
+    last_epoch = int(re.findall(pattern=pattern, string=filename)[0])
+
+    # Load model and continue training model from last epoch
+    model = load_model(filepath=os.path.join(os.getcwd(), 'Saved_Model', filename))
+    model.fit(x=train_ds, epochs=5, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)                    
+```
+
+If no model exists already (i.e no training has been done yet), we simply define our model (MobileNetV3Small in our case) and compile then fit the model to the data for training.
+
+Whenever our training gets interuptted, the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
+
+Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main.py) in the repository to see the whole training script.
+
 
 ### Building a container
 
