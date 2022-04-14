@@ -10,11 +10,22 @@ Tutorial on training machine learning models on Azure spot instances as part of 
 ... TODO ...
 
 ### Creating a VM
-We want to use the Azure CLI to create, start and manage our VM. For this we either need to install it or start a docker container that already has it installed. We do the latter with the following command. Note that "-it ... bash" tells docker to glue our terminal to the container and start bash inside of it so that we can interact with the container. On the other hand "mcr.microsoft.com/azure-cli" is the image name that is downloaded from [dockerhub](https://hub.docker.com/_/microsoft-azure-cli).
+Setting up a VM programmatically is useful in production, however since this is a tutorial, it is easier and safer to use the UI in the webbrowser that informs you about prices, etc...
+
+TODO: pictures
+
+Azure automatically creates a resource group that it uses to group all resources that are related to each other. This is very useful, as the number of resources that are implicitly created can be very big. When creating a VM, you are for example creating a disk resource and IP address resource as well. When you want to delete your application, you can find all of them inside your resource group.  We create a resource group named "devops-tutorial". If you prefer to choose your own names in this and the following commands, you will have to replace them in the rest of the tutorial as well.
+
+... TODO: Pictures and more explanation ...
+
+### Setting up the VM
+For managing the VM, we will use the Azure CLI. For this we either need to install it or start a docker container that already has it installed. We do the latter with the command below. 
 
 ```console
 docker run -it mcr.microsoft.com/azure-cli bash
 ```
+
+Note that "-it ... bash" tells docker to glue our terminal to the container and start bash inside of it so that we can interact with the container. On the other hand "mcr.microsoft.com/azure-cli" is the image name that is provided by Microsoft and downloaded from [dockerhub](https://hub.docker.com/_/microsoft-azure-cli).
 
 Once the container is up and running, login with the following command and follow the instructions.
 
@@ -22,20 +33,7 @@ Once the container is up and running, login with the following command and follo
 az login
 ```
 
-After we are logged in, we want to create a VM. Note that you can also do this via the webbrowser. However, in this tutorial we want to stick only to the Azure CLI for simplicity. First of all, we need to create a resource group that Azure uses to group all resources that are related to each other. This could span a react.js frontend server, a python backend server and a Postgres database server that all relate to the same application. Below, we create a resource group named "devops-tutorial" the meta data of which are stored on EU West servers. If you prefer to choose your own names in this and the following commands, you will have to replace them in the rest of the tutorial as well.
-
-```console
-az group create --name devops-tutorial --location westeu
-```
-
-
-
-... TODO ...
-
-### Setting up the VM
-Since we are using spot instances, our VM may be shut down or restarted at any point in time. Therefore, we want to always execute a script on boot that starts the docker container and thus the training process. We can use the Azure CLI to interact with the VM. The following code creates an executable script in the folder /tutorial. Replace the image name in the echo line with your own name if you did build the image yourself or use leave it the same if you want to use our version.
-
-Note: Again, we could generate a private key and directly login to the VM and execute code there, however we want to stick to the Azure CLI for simplicity. The syntax cat "<<EOF > file_name ... EOF" below is used to push a multiline string (indicated by "...") inside a file.
+Since we are using spot instances, our VM may be shut down or restarted at any point in time. Therefore, we have to make sure that the training container always starts on bootup and continues training. We now create an executable script in the folder /tutorial which starts the container. Replace the image name in the echo line with your own name if you did build the image yourself or use leave it the same if you want to use our version.
 
 ```console
 az vm run-command invoke -g devops-tutorial -n cloud-training --command-id RunShellScript --scripts \
@@ -45,11 +43,12 @@ cat <<EOF > /tutorial/startup-script.sh
 #\!/bin/bash
 docker container run neprox/cloud-training-app 
 EOF
-chmod +x /tutorial/startup-script.sh
-cat /tutorial/startup-script.sh"
+chmod +x /tutorial/startup-script.sh"
 ```
 
-Cronjobs are jobs that are executed on a periodic schedule. We want to create a cronjob that executes the script we just created on boot:
+The syntax cat "<<EOF > file_name ... EOF" below is commonly used to push a multiline string (indicated by "...") inside a file although it is not very intuitive. In addition, we need to explicitly tell the os with "chmod +x" that the file is allowed to be executed. Note also that we could log into the VM directly via ssh or install a software to log into the VM with a GUI, however for simplicity we stick to the Azure CLI.
+
+After we have created a script that starts the container, we need to execute it on every bootup. The cronjobs package suits our purposes, as it executes jobs on a periodic schedule. In our case, we specify our schedule with the string "@reboot". Since the syntax can be hard to comprehend, the [crontab-generator] is very useful to generate the cronjob. The script that is executed below can be summarized by "Store all current cronjobs to cron_bkp, add a new cronjob, schedule all the cronjobs that are now in cron_bkp, delete the file cron_bkp".
 
 ```console
 az vm run-command invoke -g devops-tutorial -n cloud-training --command-id RunShellScript --scripts \
