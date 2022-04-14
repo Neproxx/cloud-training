@@ -1,0 +1,57 @@
+import tensorflow as tf
+import tensorflow_datasets as tfds
+from tensorflow.keras import layers, models
+from tensorflow.keras.models import load_model
+import re
+import os
+
+(train_ds, val_ds) = tfds.load(name='horses_or_humans', split=['train', 'test'],
+                               as_supervised=True, batch_size=32)
+
+
+def normalize_img(img, label):
+    img = tf.cast(img, tf.float32) / 255.
+    return img, label
+
+
+# Normalize pixels
+train_ds = train_ds.map(normalize_img)
+val_ds = val_ds.map(normalize_img)
+
+
+checkpoint = tf.keras.callbacks.ModelCheckpoint(
+    filepath=os.path.join(os.getcwd(), 'Saved_Model', 'Models.{epoch}-{val_loss:.2f}.hdf5'),
+    monitor='val_loss',
+    verbose=0,
+    save_best_only=False,
+    save_weights_only=False,
+    mode='min',
+    save_freq='epoch',
+    options=None,
+    initial_value_threshold=None,
+)
+
+if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
+    pattern = '[^0-9]+([0-9]+).+'
+    filename = os.listdir(os.path.join(os.getcwd(), 'Saved_Model'))[-1]
+    last_epoch = int(re.findall(pattern=pattern, string=filename)[0])
+    model = load_model(filepath=os.path.join(os.getcwd(), 'Saved_Model', filename))
+    model.fit(x=train_ds, epochs=5, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)
+
+else:
+    model = tf.keras.applications.MobileNetV3Small(
+        input_shape=(300, 300, 3),
+        alpha=1.0,
+        minimalistic=False,
+        include_top=True,
+        weights=None,
+        input_tensor=None,
+        classes=2,
+        pooling=None,
+        dropout_rate=0.2,
+        classifier_activation='softmax',
+    )
+
+    model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                  metrics=['accuracy'])
+    model.fit(x=train_ds, epochs=5, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=0)
