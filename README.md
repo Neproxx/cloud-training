@@ -1,6 +1,8 @@
 # CloudTraining
 Tutorial on training machine learning models on Azure spot instances as part of the KTH DevOps 2022 course
 
+TODO: Give background and big picture
+
 ### Creating a training script with checkpointing
 
 There are 4 main steps to the training script:
