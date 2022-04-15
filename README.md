@@ -206,6 +206,7 @@ Since we are using spot instances, our VM may be shut down or restarted at any p
 az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-id RunShellScript --scripts "
 mkdir /tutorial
 mkdir /tutorial/models
+touch /tutorial/models/log.txt
 touch /tutorial/startup-script.sh
 cat <<EOF > /tutorial/startup-script.sh
 #\!/bin/bash
