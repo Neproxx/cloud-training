@@ -250,7 +250,7 @@ If you do not want to do this, just wait 5 minutes to make sure that some traini
 
 The easiest way to do this is to use the webbrowser UI. You can check the status of the machine by clicking on refresh. The restarting process might take a couple of minutes.
 
-After the machine has restarted, you can check the log that the python script creates to see that is resumed from a checkpoint:
+After the machine has restarted, you can check the log that the python script creates to see that it has resumed from a checkpoint:
 
 ```console
 az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-id RunShellScript --scripts "
