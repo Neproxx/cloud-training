@@ -3,14 +3,20 @@ Tutorial on training machine learning models on Azure spot instances as part of 
 
 TODO: Give background and big picture
 
+-Tensorflow
+-Keras API + callbacks
+- Epochs
+- 
+
+
 ### Creating a training script with checkpointing
 
 There are 4 main steps to the training script:
 
-1.  Create a folder to save your model at some frequency (e.g after every iteration of training)
-2.  Load your dataset of interest
-3.  Specify the callback/checkpointing object (we used Keras callbacks)
-4.  Check if model already exits in folder (that you save your model to) and simply resuming training if model exists
+1.  Load your dataset of interest
+2.  Specify the callback/checkpointing object (we used Keras callbacks to save model at some frequency)
+3.  Check if model already exits in folder (that you save your model to) 
+4.  Resume training if model exists (and update log file) or begin training (and create log file)
 
 
 For our training script example, we are going to use Tensorflow with Keras API to build a Convolutional Neural Network (CNN) on the following dataset (any other dataset of interest can be used): [horses_or_humans](https://www.tensorflow.org/datasets/catalog/horses_or_humans). 
@@ -63,13 +69,6 @@ if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
     # Find epoch number
     last_epoch = int(re.findall(pattern=pattern, string=filename)[0])
 
-    # Update log file
-    date_time = str(datetime.datetime.now())
-    date_time = date_time[:len(date_time) - 7]
-    with open('log.txt', 'a') as f:
-        f.write('Training has resumed at: ' + date_time + '\n')
-        f.write('Resuming from Epoch Number: ' + str(last_epoch+1) + '\n\n')
-
     # Load model and continue training model from last epoch
     model = load_model(filepath=os.path.join(os.getcwd(), 'Saved_Model', filename))
     model.fit(x=train_ds, epochs=50, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)                   
@@ -79,7 +78,7 @@ If no model exists already (i.e no training has been done yet), we simply define
 
 Now whenever our training gets interrupted, the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
 
-Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main.py) in the repository to see the whole training script.
+Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main.py) in the repository to see the whole training script. We also added a log file to keep track of the training process.
 
 
 ### Building a container
