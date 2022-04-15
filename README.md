@@ -250,7 +250,15 @@ docker container logs -f <container-id>
 If you do not want to do this, just wait 5 minutes to make sure that some training progress was made (at least two epochs of training). We now want to simulate an eviction / termination of the machine. Unlike AWS, Azure does not give us any non-hacky way of automatically restarting the VM after eviction. In order to keep this tutorial simple, we will thus manually restart the VM.
 
 The easiest way to do this is to use the webbrowser UI. You can check the status of the machine by clicking on refresh. The restarting process might take a couple of minutes.
+  
+  ![Restarting VM](./images/restart-vm.gif)
 
+Alternatively, you can use the Azure CLI:
+
+```console
+az vm restart --name cloud-training --resource-group tutorial-resource-group
+```
+  
 After the machine has restarted, you can check the log that the python script creates to see that it has resumed from a checkpoint:
 
 ```console
@@ -258,15 +266,11 @@ az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-
 cat /tutorial/models/log.txt"
 ```
 
-TODO: Show how output looks like
+We obtain the following output on the Azure CLI:
+  
+  ![image](https://user-images.githubusercontent.com/102597887/163652531-291b81fe-f073-47b9-bffc-8dfb37c66c90.png)
 
-![Restarting VM](./images/restart-vm.gif)
-
-Alternatively, you can use the Azure CLI:
-
-```console
-az vm restart --name cloud-training --resource-group tutorial-resource-group
-```
+We can see when the training has begun as well as when training has resumed (after VM termination/restart) and at what Epoch (iterations) number.
 
 ### Cleanup
 Cleaning up our resources is made easy, as we can simply go to resource groups and delete both groups that we find there. It does take a while until Azure has removed all services, so you naturally have to wait 1-3 minutes until everything is gone.
