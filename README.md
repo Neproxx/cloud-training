@@ -96,7 +96,7 @@ Next up, we need a VM image to run on our new server. For us, it is important th
 
 ![Select correct image](./images/03-Azure-tutorial-Image-selection.gif)
 
-We tick the "spot instance" box and notice that prices go down by 80% to 90%. We can select an eviction policy that is either solely based on capacity, meaning that Azure will terminate our instance when they require the hardware capacity, or also on price. Prices for cloud servers are dynamic and thus it is reasonable to evict a machine once it passes a price threshold. In this case, we set it to 0.5$. 
+We tick the "spot instance" box and notice that prices go down by 80% to 90%. We can select an eviction policy that is either solely based on capacity, meaning that Azure will terminate our instance when they require the hardware capacity, or also on price. Prices for cloud servers are dynamic and thus it is reasonable to evict a machine once it passes a price threshold. You may set it to for example 0.5$. 
 
 ![Configure spot instance](./images/04-Azure-tutorial-Spot-Instance-configuration.gif)
 
@@ -116,15 +116,13 @@ For managing the VM, we will use the Azure CLI. For this we either need to insta
 docker run -it mcr.microsoft.com/azure-cli bash
 ```
 
-Note that "-it ... bash" tells docker to glue our terminal to the container and start bash inside of it so that we can interact with the container. On the other hand "mcr.microsoft.com/azure-cli" is the image name that is provided by Microsoft and downloaded from [dockerhub](https://hub.docker.com/_/microsoft-azure-cli).
-
-Once the container is up and running, login with the following command and follow the instructions.
+Note that "-it ... bash" tells docker to glue our terminal to the container and start bash inside of it so that we can interact with it. On the other hand "mcr.microsoft.com/azure-cli" is the image name that is provided by Microsoft and downloaded from [dockerhub](https://hub.docker.com/_/microsoft-azure-cli). Once the container is up and running, login by following the instructions inside the terminal.
 
 ```console
 az login
 ```
 
-Since we are using spot instances, our VM may be shut down or restarted at any point in time. Therefore, we have to make sure that the training container always starts on bootup and continues training. We now create an executable script in the folder /tutorial which starts the container. Replace the image name in the docker container run line with your own name if you did build the image yourself or leave it the same if you want to use our image from dockerhub.
+Since we are using spot instances, our VM may be shut down or restarted at any point in time. Therefore, we have to make sure that the container always starts on bootup and continues training. We now create an executable script in the folder "/tutorial" which starts the container. Replace the image name in the docker container run line with your own image name if you built it yourself and pushed it to dockerhub.
 
 ```console
 az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-id RunShellScript --scripts \
