@@ -117,7 +117,7 @@ To finally build the container image, you must have Docker installed on your hos
 You can then build the container image from the Dockfile using your terminal by (where path refers to the directory containing the Dockerfile):
 
 ```console
-docker build <path>
+docker build -t name_of_image <path>
 ```
 You can then view your created container images using:
 
