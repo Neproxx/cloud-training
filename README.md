@@ -5,8 +5,6 @@ Training a machine learning (ML) model is one of the core components of MLOps, e
 
 In this tutorial we will show how to create a Docker container that trains an ML model with checkpointing and resumes training after random termination + restart of the Azure spot instance. We will be using [Tensorflow](https://www.tensorflow.org/) with [Keras API](https://keras.io/about/) to build an artificial nerual network (ANN), as these usually require high computational costs and long training times. Tensorflow is a free and open-source software library for machine learning and artificial intelligence with particular focus on building deep neural networks. Keras is simply a deep learning API written in Python, running on top of TensorFlow. It was developed with a focus on enabling fast experimentation and ease of use. We will also make of use of [Keras callbacks](https://keras.io/api/callbacks/). Callbacks are objects that can perform actions at various stages of training and what will actually allow us to perform checkpointing to save our models incase of termination.
 
-- Epochs
-- 
 
 ### Creating a training script with checkpointing
 
@@ -95,7 +93,7 @@ else:
     model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
                   metrics=['accuracy'])
 
-    model.fit(x=train_ds, epochs=5, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=0)               
+    model.fit(x=train_ds, epochs=50, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=0)               
 ```
 
 Now, whenever our training gets interrupted the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
