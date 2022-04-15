@@ -22,7 +22,7 @@ There are 4 main steps to the training script:
 
 For our training script example, we are going to use Tensorflow with Keras API to build a Convolutional Neural Network (CNN) on the following dataset (any other dataset of interest can be used): [horses_or_humans](https://www.tensorflow.org/datasets/catalog/horses_or_humans). 
 
-We will also use the 'MobileNetV3Small' architecture as it has over a million parameters to learn but any other keras model instance can be used. You can find this architecture under:
+We will also use the [MobileNetV3Small](https://www.tensorflow.org/api_docs/python/tf/keras/applications/MobileNetV3Small) architecture as it has over a million parameters to learn but any other keras model instance can be used. You can find this architecture under:
 
 ```python
 tf.keras.applications.MobileNetV3Small
@@ -53,7 +53,7 @@ checkpoint = tf.keras.callbacks.ModelCheckpoint(
 )                           
 ```
 
-When specifying the name of the saved model, 'Models.{epoch}-{val_loss:.2f}' in our case, it is important to include the .{epoch} part as this will later on be used to inform us of the epoch number when our model gets terminated. We also saved the file using the '.hdf5' extension such that the whole model is contained in a single file. We also save the model at every 5 epochs (set my parameter 'period).
+When specifying the name of the saved model, 'Models.{epoch}-{val_loss:.2f}' in our case, it is important to include the .{epoch} part as this will later on be used to inform us of the epoch number when our model gets terminated. We also saved the file using the '.hdf5' extension such that the whole model is contained in a single file. We also save the model at every 5 epochs (set my parameter 'period').
 
 Next is to check whether a model already exists in the 'Saved_Model' file and to simply resume training from there. We will also use a regular expression to extract the epoch number from the saved file name and then load the model to continue training from the last epoch before termination. 
 
@@ -77,9 +77,30 @@ if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
 
 If no model exists already (i.e no training has been done yet), we simply define our model (MobileNetV3Small in our case) and compile then fit the model to the data for training.
 
-Now whenever our training gets interrupted, the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
+```python
+else:
+    model = tf.keras.applications.MobileNetV3Small(
+        input_shape=(300, 300, 3),
+        alpha=1.0,
+        minimalistic=False,
+        include_top=True,
+        weights=None,
+        input_tensor=None,
+        classes=2,
+        pooling=None,
+        dropout_rate=0.2,
+        classifier_activation='softmax',
+    )
 
-Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main.py) in the repository to see the whole training script. We also added a log file to keep track of the training process.
+    model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                  metrics=['accuracy'])
+
+    model.fit(x=train_ds, epochs=5, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=0)               
+```
+
+Now, whenever our training gets interrupted the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
+
+Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main.py) in the repository to see the whole training script. We also added a log file in the script to keep track of the training process.
 
 
 ### Building a container
