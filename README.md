@@ -5,10 +5,17 @@ Training a machine learning (ML) model is one of the core components of MLOps, e
 
 In this tutorial we will show how to create a Docker container that trains an ML model with checkpointing and resumes training after random termination + restart of the Azure spot instance. We will be using [Tensorflow](https://www.tensorflow.org/) with [Keras API](https://keras.io/about/) to build an artificial nerual network (ANN), as these usually require high computational costs and long training times. Tensorflow is a free and open-source software library for machine learning and artificial intelligence with particular focus on building deep neural networks. Keras is simply a deep learning API written in Python, running on top of TensorFlow. It was developed with a focus on enabling fast experimentation and ease of use. We will also make of use of [Keras callbacks](https://keras.io/api/callbacks/). Callbacks are objects that can perform actions at various stages of training and what will actually allow us to perform checkpointing to save our models incase of termination.
 
+The tutorial consists of six subsections:
+1. Creating a training script with checkpointing
+2. Building a Docker container
+3. Creating a Virtual Machine
+4. Setting up the VM
+5. Model Training
+6. Cleanup
 
 ### Creating a training script with checkpointing
 
-There are 4 main steps to the training script:
+There are four main steps to the training script:
 
 1.  Load your dataset of interest
 2.  Specify the callback/checkpointing object (we used Keras callbacks to save model at some frequency)
@@ -101,7 +108,7 @@ Now, whenever our training gets interrupted the script will simply refer to the 
 Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main.py) in the repository to see the whole training script. We also added a log file in the script to keep track of the training process.
 
 
-### Building a container
+### Building a Docker container
 
 After creating your training script, the next step is to create what is called a 'container'. A container is basically a unit of software that packages up all the code and dependencies required to run your application (in this case the training script). To do this, we will use [Docker](https://www.docker.com/) which is a popular open platform for delivering software applications using containers.
 
