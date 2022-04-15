@@ -200,7 +200,7 @@ Note that "-it ... bash" tells docker to glue our terminal to the container and 
 az login
 ```
 
-Since we are using spot instances, our VM may be shut down or restarted at any point in time. Therefore, we have to make sure that the container always starts on bootup and continues training. We now create an executable script in the folder "/tutorial" which starts the container. Replace the image name in the docker container run line with your own image name if you built it yourself and pushed it to dockerhub.
+Since we are using spot instances, our VM may be shut down or restarted at any point in time. Therefore, we have to make sure that the container always starts on bootup and continues training. We now create an executable script in the folder "/tutorial", which starts the container, as well as a log file in the folder "/models". Replace the image name in the docker container run line with your own image name if you built it yourself and pushed it to dockerhub.
 
 ```console
 az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-id RunShellScript --scripts "
