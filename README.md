@@ -108,10 +108,28 @@ CMD ["python", "main.py"]
 1. Inherits the tensorflow image from Dockerhub as we require tensorflow in our application
 2. Creates and sets the working directory inside the container to the folder '/app'
 3. Copy the required files from our host machine into the '/app' folder (the current working directory) 
-4. Install the 'tensorflow_datasets' python library as we use this to obtain the dataset for the training script. A 'Saved_Model' file is also made where we would store our saved models in case training gets interrupted
+4. Install the 'tensorflow_datasets' python library as we use this to obtain the dataset for the training script. A 'Saved_Model' folder is also made where we would store our saved models in case training gets interrupted
 5. Run our training script 'main.py'
 
+Note that you MUST call your Dockerfile 'Dockerfile' and not any other name.
 
+To finally build the container image, you must have Docker installed on your host computer. You can follow the steps provided [here](https://docs.docker.com/desktop/).
+You can then build the container image from the Dockfile using your terminal by (where path refers to the directory containing the Dockerfile):
+
+```console
+docker build <path>
+```
+You can then view your created container images using:
+
+```console
+docker images
+```
+
+To push your image to Dockerhub, you must first have a [Dockerhub repository](https://docs.docker.com/docker-hub/repos/). You must name your local image using your Docker Hub username and the repository name that you created through Docker Hub on the web. Finally, you can now push the image to Dockerhub using:
+
+```console
+docker push <hub-user>/<repo-name>:<tag>
+```
 
 
 ### Creating a VM
