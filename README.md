@@ -209,7 +209,7 @@ mkdir /tutorial/models
 touch /tutorial/startup-script.sh
 cat <<EOF > /tutorial/startup-script.sh
 #\!/bin/bash
-docker container -v /tutorial/models:/app/Saved_Model run neprox/cloud-training-app 
+docker container run -v /tutorial/models:/app/Saved_Model neprox/cloud-training-app 
 EOF
 chmod +x /tutorial/startup-script.sh"
 ```
