@@ -1,13 +1,14 @@
 # CloudTraining
 Tutorial on training machine learning models on Azure spot instances as part of the KTH DevOps 2022 course
 
-TODO: Give background and big picture
+Training a machine learning (ML) model is one of the core components of MLOps, e.g. for continuous deployment. However, training a model can require high-end hardware resources over many days which in turn leads to high monetary costs. Spot instances on cloud platforms like Azure are servers that can be rented for usually 10% to 25% of the original price. As a downside, access to the instance may be withdrawn at any point after a 30 second notice. Model training can take advantage of spot instances by checkpointing the training state so that training can be resumed from a checkpoint after termination and restart of the server.
+
+In this tutorial we will show how to create a Docker container that trains an ML model with checkpointing and resumes training after random termination + restart of the Azure spot instance.
 
 -Tensorflow
 -Keras API + callbacks
 - Epochs
 - 
-
 
 ### Creating a training script with checkpointing
 
@@ -17,6 +18,8 @@ There are 4 main steps to the training script:
 2.  Specify the callback/checkpointing object (we used Keras callbacks to save model at some frequency)
 3.  Check if model already exits in folder (that you save your model to) 
 4.  Resume training if model exists (and update log file) or begin training (and create log file)
+
+![image](https://user-images.githubusercontent.com/102597887/163598027-ad785a8d-9589-4922-a89d-b64f3c1fcc4d.png)
 
 
 For our training script example, we are going to use Tensorflow with Keras API to build a Convolutional Neural Network (CNN) on the following dataset (any other dataset of interest can be used): [horses_or_humans](https://www.tensorflow.org/datasets/catalog/horses_or_humans). 
