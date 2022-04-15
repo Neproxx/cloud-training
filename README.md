@@ -81,7 +81,38 @@ Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main
 
 ### Building a container
 
-... TODO ...
+After creating your training script, the next step is to create what is called a 'container'. A container is basically a unit of software that packages up all the code and dependencies required to run your application (in this case the training script). To do this, we will use [Docker](https://www.docker.com/) which is a popular open platform for delivering software applications using containers.
+
+Docker consists of two main components:
+
+1. [Docker Engine](https://docs.docker.com/engine/) - This is the packaging tool used to build and run container images (a container is simply a running image)
+2. [Docker Hub](https://docs.docker.com/docker-hub/) - This is a cloud service for sharing your applications (which we will use to download the container image on the VM)
+
+To build the container image, we will have to create what is called a [Dockerfile](https://docs.docker.com/engine/reference/builder/). This is simply a file with a few lines of code that packages up all the required dependencies, libraries etc... in the container image. For our training script, the Dockerfile looks like this:
+
+
+```dockerfile
+FROM tensorflow/tensorflow
+
+WORKDIR /app
+
+COPY . .
+
+# Install dependencies
+RUN pip install tensorflow_datasets && \
+    mkdir Saved_Model
+
+CMD ["python", "main.py"]                    
+```
+
+1. Inherits the tensorflow image from Dockerhub as we require tensorflow in our application
+2. Creates and sets the working directory inside the container to the folder '/app'
+3. Copy the required files from our host machine into the '/app' folder (the current working directory) 
+4. Install the 'tensorflow_datasets' python library as we use this to obtain the dataset for the training script. A 'Saved_Model' file is also made where we would store our saved models in case training gets interrupted
+5. Run our training script 'main.py'
+
+
+
 
 ### Creating a VM
 Setting up a VM programmatically is useful in production, however since this is a tutorial, it is easier and safer to use the UI in the webbrowser that informs you about prices, etc... Login to the [Azure portal](portal.azure.com) and start the process of creating a VM as shown below.
