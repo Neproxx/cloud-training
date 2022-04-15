@@ -231,7 +231,7 @@ It is time to train a model on our VM. We can either start the script directly o
 
 ```console
 az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-id RunShellScript --scripts "
-/tutorial/startup-script.sh
+/tutorial/startup-script.sh"
 ```
 
 The model is now training. If you want to see the progress live you can login to the server with ssh, check the id for the running container with
