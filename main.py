@@ -80,4 +80,4 @@ else:
     with open('log.txt', 'w') as f:
         f.write('Training has begun at: ' + date_time + '\n\n')
 
-    model.fit(x=train_ds, epochs=5, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=0)
+    model.fit(x=train_ds, epochs=50, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=0)
