@@ -84,13 +84,30 @@ Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main
 ... TODO ...
 
 ### Creating a VM
-Setting up a VM programmatically is useful in production, however since this is a tutorial, it is easier and safer to use the UI in the webbrowser that informs you about prices, etc...
+Setting up a VM programmatically is useful in production, however since this is a tutorial, it is easier and safer to use the UI in the webbrowser that informs you about prices, etc... Login to the [Azure portal](portal.azure.com) and start the process of creating a VM as shown below.
 
-TODO: pictures
+![Create VM](./images/01-Azure-tutorial-Create-VM.gif)
 
-Azure automatically creates a resource group that it uses to group all resources that are related to each other. This is very useful, as the number of resources that are implicitly created can be very big. When creating a VM, you are for example creating a disk resource and IP address resource as well. When you want to delete your application, you can find all of them inside your resource group.  We create a resource group named "devops-tutorial". If you prefer to choose your own names in this and the following commands, you will have to replace them in the rest of the tutorial as well.
+First of all, we need to create a resource group that groups all related components of an application together. This is very useful, as many resources will be created implicitly and you will only know about them and find them by investigating the resource group. A VM for example requires disk space and an IP address which both represent implicitly created resources. When you want to delete your application, you can find all of them inside your resource group. We create a resource group named "tutorial-resource-group". If you prefer to choose your own names in this and the following commands, you will have to replace them in the rest of the tutorial as well.
 
-... TODO: Pictures and more explanation ...
+![Create resource group](./images/02-Azure-tutorial-Resource-Group-and-VM-name.gif)
+
+Next up, we need a VM image to run on our new server. For us, it is important that it has Docker installed so that we can start the Docker container when the system boots up. The tensorflow image from Nvidia fits our purposes.
+
+![Select correct image](./images/03-Azure-tutorial-Image-selection.gif)
+
+We tick the "spot instance" box and notice that prices go down by 80% to 90%. We can select an eviction policy that is either solely based on capacity, meaning that Azure will terminate our instance when they require the hardware capacity, or also on price. Prices for cloud servers are dynamic and thus it is reasonable to evict a machine once it passes a price threshold. In this case, we set it to 0.5$. 
+
+![Configure spot instance](./images/04-Azure-tutorial-Spot-Instance-configuration.gif)
+
+Most of our costs will be determined by the server size / hardware we select. In a real use case, we would select a large server size including GPUs in order to speed up model training. For educational purposes however, it is sufficient to select a small server that is covered by Azure's free plan.
+
+![Select hardware](./images/05-Azure-tutorial-Select-hardware.gif)
+
+Finally, enter a user name and a key pair name for ssh authentication. This will not be needed in the scope of the tutorial, but you could use these credentials to connect to the VM. Click on Review + create and see how your VM instance is created.
+
+
+![Finish VM creation](./images/06-Azure-tutorial-click-on-create.gif)
 
 ### Setting up the VM
 For managing the VM, we will use the Azure CLI. For this we either need to install it or start a docker container that already has it installed. We do the latter with the command below. 
@@ -107,10 +124,10 @@ Once the container is up and running, login with the following command and follo
 az login
 ```
 
-Since we are using spot instances, our VM may be shut down or restarted at any point in time. Therefore, we have to make sure that the training container always starts on bootup and continues training. We now create an executable script in the folder /tutorial which starts the container. Replace the image name in the echo line with your own name if you did build the image yourself or use leave it the same if you want to use our version.
+Since we are using spot instances, our VM may be shut down or restarted at any point in time. Therefore, we have to make sure that the training container always starts on bootup and continues training. We now create an executable script in the folder /tutorial which starts the container. Replace the image name in the docker container run line with your own name if you did build the image yourself or leave it the same if you want to use our image from dockerhub.
 
 ```console
-az vm run-command invoke -g devops-tutorial -n cloud-training --command-id RunShellScript --scripts \
+az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-id RunShellScript --scripts \
 "mkdir /tutorial
 touch /tutorial/startup-script.sh
 cat <<EOF > /tutorial/startup-script.sh
@@ -120,12 +137,12 @@ EOF
 chmod +x /tutorial/startup-script.sh"
 ```
 
-The syntax cat "<<EOF > file_name ... EOF" below is commonly used to push a multiline string (indicated by "...") inside a file although it is not very intuitive. In addition, we need to explicitly tell the os with "chmod +x" that the file is allowed to be executed. Note also that we could log into the VM directly via ssh or install a software to log into the VM with a GUI, however for simplicity we stick to the Azure CLI.
+The syntax cat "<<EOF > file_name ... EOF" below is commonly used to push a multiline string (indicated by "...") into a file. In addition, we need to explicitly tell the os with "chmod +x" that the file is allowed to be executed. Note also that we could login to the VM directly via ssh or install a software to login to the VM with a GUI, however for simplicity we stick to the Azure CLI.
 
 After we have created a script that starts the container, we need to execute it on every bootup. The cronjobs package suits our purposes, as it executes jobs on a periodic schedule. In our case, we specify our schedule with the string "@reboot". Since the syntax can be hard to comprehend, the [crontab-generator] is very useful to generate the cronjob. The script that is executed below can be summarized by "Store all current cronjobs to cron_bkp, add a new cronjob, schedule all the cronjobs that are now in cron_bkp, delete the file cron_bkp".
 
 ```console
-az vm run-command invoke -g devops-tutorial -n cloud-training --command-id RunShellScript --scripts \
+az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-id RunShellScript --scripts \
 "sudo crontab -l > cron_bkp
 sudo echo '@reboot sudo /tutorial/startup-script.sh >/dev/null 2>&1' >> cron_bkp
 sudo crontab cron_bkp
@@ -139,7 +156,7 @@ It is time to train a model on our VM.
 
 Since it can be terminated / evicted at any moment, we will use the Azure CLI to simulate such an incident:  
 ```console
-az vm simulate-eviction --name cloud-training --resource-group devops-tutorial
+az vm simulate-eviction --name cloud-training --resource-group tutorial-resource-group
 ```
 
 ### Cleanup
@@ -147,7 +164,7 @@ az vm simulate-eviction --name cloud-training --resource-group devops-tutorial
 Explain how to delete the things again, give a hint that they can double check within the UI of the webbrowser.
 
 ```console
-az group delete --name devops-tutorial
+az group delete --name tutorial-resource-group
 ```
 
 ### Further Notes
