@@ -7,16 +7,11 @@ TODO: Give background and big picture
 
 There are 4 main steps to the training script:
 
-1.  Create a folder to save your model at some frequency (e.g after every epoch)
+1.  Create a folder to save your model at some frequency (e.g after every iteration of training)
 2.  Load your dataset of interest
 3.  Specify the callback/checkpointing object (we used Keras callbacks)
 4.  Check if model already exits in folder (that you save your model to) and simply resuming training if model exists
 
-Firstly, we will create a folder called 'Saved_Model' in our working directory where we can store our saved models whenever training is interrupted. This can be made using:
-
-```console
-mkdir Saved_Model
-```
 
 For our training script example, we are going to use Tensorflow with Keras API to build a Convolutional Neural Network (CNN) on the following dataset (any other dataset of interest can be used): [horses_or_humans](https://www.tensorflow.org/datasets/catalog/horses_or_humans). 
 
@@ -45,19 +40,20 @@ checkpoint = tf.keras.callbacks.ModelCheckpoint(
     save_weights_only=False,
     mode='min',
     save_freq='epoch',
+    period=5,
     options=None,
     initial_value_threshold=None,
 )                           
 ```
 
-When specifying the name of the saved model, 'Models.{epoch}-{val_loss:.2f}' in our case, it is important to include the .{epoch} part as this will later on be used to inform us of the epoch number when our model gets terminated. We also saved the file using the '.hdf5' extension such that the whole model is contained in a single file. We also save the model at every epoch as can be set by the 'save_freq' setting.
+When specifying the name of the saved model, 'Models.{epoch}-{val_loss:.2f}' in our case, it is important to include the .{epoch} part as this will later on be used to inform us of the epoch number when our model gets terminated. We also saved the file using the '.hdf5' extension such that the whole model is contained in a single file. We also save the model at every 5 epochs (set my parameter 'period).
 
 Next is to check whether a model already exists in the 'Saved_Model' file and to simply resume training from there. We will also use a regular expression to extract the epoch number from the saved file name and then load the model to continue training from the last epoch before termination. 
 
 This can be done in the following way:
 
 ```python
-# If model already exists, continue training
+# If model(s) already exists, continue training
 if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
 
     # Regular expression pattern to extract epoch number
@@ -67,14 +63,21 @@ if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
     # Find epoch number
     last_epoch = int(re.findall(pattern=pattern, string=filename)[0])
 
+    # Update log file
+    date_time = str(datetime.datetime.now())
+    date_time = date_time[:len(date_time) - 7]
+    with open('log.txt', 'a') as f:
+        f.write('Training has resumed at: ' + date_time + '\n')
+        f.write('Resuming from Epoch Number: ' + str(last_epoch+1) + '\n\n')
+
     # Load model and continue training model from last epoch
     model = load_model(filepath=os.path.join(os.getcwd(), 'Saved_Model', filename))
-    model.fit(x=train_ds, epochs=5, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)                    
+    model.fit(x=train_ds, epochs=50, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)                   
 ```
 
 If no model exists already (i.e no training has been done yet), we simply define our model (MobileNetV3Small in our case) and compile then fit the model to the data for training.
 
-Now whenever our training gets interuptted, the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
+Now whenever our training gets interrupted, the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
 
 Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main.py) in the repository to see the whole training script.
 
