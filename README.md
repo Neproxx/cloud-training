@@ -234,7 +234,7 @@ az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-
 /tutorial/startup-script.sh
 ```
 
-The model is now training. If you want to see the progress live you can login to the server with ssh, check the id fo the running container with
+The model is now training. If you want to see the progress live you can login to the server with ssh, check the id for the running container with
 
 ```console
 docker container ls 
