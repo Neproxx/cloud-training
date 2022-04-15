@@ -162,7 +162,7 @@ docker push <hub-user>/<repo-name>:<tag>
 
 
 ### Creating a VM
-Setting up a VM programmatically is useful in production, however since this is a tutorial, it is easier and safer to use the UI in the webbrowser that informs you about prices, etc... Login to the [Azure portal](portal.azure.com) and start the process of creating a VM as shown below.
+Setting up a VM programmatically is useful in production, however since this is a tutorial, it is easier and safer to use the UI in the webbrowser that informs you about prices, etc... Login to the [Azure portal](https://portal.azure.com/) and start the process of creating a VM as shown below.
 
 ![Create VM](./images/01-Azure-tutorial-Create-VM.gif)
 
