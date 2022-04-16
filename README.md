@@ -142,7 +142,6 @@ CMD ["python", "main.py"]
 
 Note that you MUST call your Dockerfile 'Dockerfile' and not any other name.
 
-To finally build the container image, you must have Docker installed on your host computer. You can follow the steps provided [here](https://docs.docker.com/desktop/).
 You can then build the container image from the Dockfile using your terminal by (where path refers to the directory containing the Dockerfile):
 
 ```console
