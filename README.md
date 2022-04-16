@@ -77,10 +77,10 @@ if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
 
     # Load model and continue training model from last epoch
     model = load_model(filepath=os.path.join(os.getcwd(), 'Saved_Model', filename))
-    model.fit(x=train_ds, epochs=50, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)                   
+    model.fit(x=train_ds, epochs=69, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)                   
 ```
 
-If no model exists already (i.e no training has been done yet), we simply define our model (MobileNetV3Small in our case) and compile then fit the model to the data for training.
+If no model exists already (i.e no training has been done yet), we simply define our model (MobileNetV3Small in our case) and compile then fit the model to the data for training for 69 (very meaningful number) epochs/iterations.
 
 ```python
 else:
@@ -100,7 +100,7 @@ else:
     model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
                   metrics=['accuracy'])
 
-    model.fit(x=train_ds, epochs=50, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=0)               
+    model.fit(x=train_ds, epochs=69, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=0)               
 ```
 
 Now, whenever our training gets interrupted the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
