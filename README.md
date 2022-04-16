@@ -22,7 +22,7 @@ There are four main steps to the training script:
 3.  Check if model already exits in folder (that you save your model to) 
 4.  Resume training if model exists (and update log file) or begin training (and create log file)
 
-![image](https://user-images.githubusercontent.com/102597887/163598027-ad785a8d-9589-4922-a89d-b64f3c1fcc4d.png)
+![image](https://user-images.githubusercontent.com/102597887/163672801-7bc9ea7b-1f35-4ba2-be8b-8dab527c2789.png)
 
 
 For our training script example, we are going to use Tensorflow with Keras API to build a Convolutional Neural Network (CNN) on the following dataset (any other dataset of interest can be used): [horses_or_humans](https://www.tensorflow.org/datasets/catalog/horses_or_humans). 
