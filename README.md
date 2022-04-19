@@ -209,7 +209,7 @@ touch /tutorial/models/log.txt
 touch /tutorial/startup-script.sh
 cat <<EOF > /tutorial/startup-script.sh
 #\!/bin/bash
-docker container run -v /tutorial/models:/app/Saved_Model neprox/cloud-training-app 
+docker container run -v /tutorial/models:/app/Saved_Model miltonius/cloud_trainingv2 
 EOF
 chmod +x /tutorial/startup-script.sh"
 ```
