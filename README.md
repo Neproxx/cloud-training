@@ -129,12 +129,10 @@ The individual commands do the following:
 1. Inherits the tensorflow image from Dockerhub as we require tensorflow in our application
 2. Creates and sets the working directory inside the container to the folder '/app'
 3. Copy the required files from our host machine into the '/app' folder (the current working directory) 
-4. Install the 'tensorflow_datasets' python library as we use this to obtain the dataset for the training script. A 'Saved_Model' folder is also made where we would store our saved models in case training gets interrupted
-5. Run our training script 'main.py'
+4. Install the 'tensorflow_datasets' python library as we use this to obtain the dataset for the training script. Create a 'Saved_Model' folder we will store our model checkpoints.
+5. Run our training script 'main.py' when the container is started.
 
-Note that you MUST call your Dockerfile 'Dockerfile' and not any other name.
-
-You can then build the container image from the Dockfile using your terminal by (where path refers to the directory containing the Dockerfile):
+You can then build the container image from the Dockfile using your terminal by (where path refers to the directory containing the Dockerfile). If you do not name your file "Dockerfile", you will have to specify the name with the -f flag. The image name is relevant for uploading it to Dockerhub, so please first read the explanations further below before executing this command.
 
 ```console
 docker build -t name_of_image <path>
@@ -142,13 +140,13 @@ docker build -t name_of_image <path>
 You can then view your created container images using:
 
 ```console
-docker images
+docker image ls
 ```
 
-To push your image to Dockerhub, you must first have a [Dockerhub repository](https://docs.docker.com/docker-hub/repos/). You must name your local image using your Docker Hub username and the repository name that you created through Docker Hub on the web. Finally, you can now push the image to Dockerhub using:
+To push your image to Dockerhub, you must first open a [Dockerhub repository](https://docs.docker.com/docker-hub/repos/). In order to upload your image, you must give the image a name that contains your Docker Hub username followed by the repository name that you created through Docker Hub on the web. It has the form `<hub-user>/<repo-name>`. Finally, you can push the image to Dockerhub using:
 
 ```console
-docker push <hub-user>/<repo-name>:<tag>
+docker push <hub-user>/<repo-name>
 ```
 
 
