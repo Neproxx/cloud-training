@@ -1,47 +1,42 @@
 # CloudTraining
-Tutorial on training machine learning models on Azure spot instances as part of the KTH DevOps 2022 course
+This is a tutorial on training machine learning models on Azure spot instances as part of the KTH DevOps 2022 course.
 
 Training a machine learning (ML) model is one of the core components of MLOps, e.g. for continuous deployment. However, training a model can require high-end hardware resources over many days which in turn leads to high monetary costs. Spot instances on cloud platforms like Azure are servers that can be rented for usually 10% to 25% of the original price. As a downside, access to the instance may be withdrawn at any point after a 30 second notice. Model training can take advantage of spot instances by checkpointing the training state so that training can be resumed from a checkpoint after termination and restart of the server.
 
-In this tutorial we will show how to create a Docker container that trains an ML model with checkpointing and resumes training after random termination + restart of the Azure spot instance. We will be using [Tensorflow](https://www.tensorflow.org/) with [Keras API](https://keras.io/about/) to build an artificial nerual network (ANN), as these usually require high computational costs and long training times. Tensorflow is a free and open-source software library for machine learning and artificial intelligence with particular focus on building deep neural networks. Keras is simply a deep learning API written in Python, running on top of TensorFlow. It was developed with a focus on enabling fast experimentation and ease of use. We will also make of use of [Keras callbacks](https://keras.io/api/callbacks/). Callbacks are objects that can perform actions at various stages of training and what will actually allow us to perform checkpointing to save our models incase of termination.
+In this tutorial we lead you through the process of writing code for model training with checkpointing, containerizing the application and running it on an Azure spot instance in way that training resumes after random termination + restart. We will be using [Tensorflow](https://www.tensorflow.org/) with [Keras API](https://keras.io/about/) to build an artificial neural network (ANN), as these usually require high computational costs and long training times. Tensorflow is a free and open-source software library for machine learning and artificial intelligence with particular focus on building deep neural networks. Keras is a high level library built on top of TensorFlow for quickly building deep learning models. It was developed with a focus on enabling fast experimentation and ease of use. Furthermore, we use [Keras callbacks](https://keras.io/api/callbacks/) which are functions that are executed after various stages of training (e.g. every [epoch](https://radiopaedia.org/articles/epoch-machine-learning)). They are particularly helpful to create checkpoints to resume from.
 
 The tutorial consists of six subsections:
 1. Creating a training script with checkpointing
 2. Building a Docker container
-3. Creating a Virtual Machine
+3. Creating a Virtual Machine on Azure
 4. Setting up the VM
 5. Model Training
 6. Cleanup
 
+You have the option to write the Python code and containerize it yourself. If you want to do that, we recommend using the [Docker Playground](https://www.katacoda.com/courses/docker/playground) on Katacoda. Otherwise, you may use our already built Docker images for running on the VM and start actively engaging the tutorial from section 3 - Creating a Virtual Machine on Azure.
+
 ### Creating a training script with checkpointing
 
-There are four main steps to the training script:
+Let us now look at how to create the training script. We will train an image classifier that aims to distinguish between pictures of [humans and horses](https://www.tensorflow.org/datasets/catalog/horses_or_humans) (a well-known human weakness). There are four main steps to the training script:
 
-1.  Load your dataset of interest
-2.  Specify the callback/checkpointing object (we used Keras callbacks to save model at some frequency)
-3.  Check if model already exits in folder (that you save your model to) 
-4.  Resume training if model exists (and update log file) or begin training (and create log file)
+1.  Load your dataset of interest.
+2.  Specify the callback/checkpointing function.
+3.  On startup, check if a checkpointed model already exits 
+4.  Resume training if model exists (and update log file), otherwise begin training (and create log file)
 
 ![image](https://user-images.githubusercontent.com/102597887/163672801-7bc9ea7b-1f35-4ba2-be8b-8dab527c2789.png)
 
 
-For our training script example, we are going to use Tensorflow with Keras API to build a Convolutional Neural Network (CNN) on the following dataset (any other dataset of interest can be used): [horses_or_humans](https://www.tensorflow.org/datasets/catalog/horses_or_humans). 
+We will use the log file to understand what is going on within the VM. For our training script example, we are going to use Tensorflow with Keras API to build a Convolutional Neural Network (CNN). Any other dataset than the [horses_or_humans](https://www.tensorflow.org/datasets/catalog/horses_or_humans) one may be used. Instead of specifying a certain architecture, we will use the already existing [MobileNetV3Small](https://www.tensorflow.org/api_docs/python/tf/keras/applications/MobileNetV3Small) architecture as it has over a million parameters to learn. Again, any other model instance could be used.
 
-We will also use the [MobileNetV3Small](https://www.tensorflow.org/api_docs/python/tf/keras/applications/MobileNetV3Small) architecture as it has over a million parameters to learn but any other keras model instance can be used. You can find this architecture under:
-
-```python
-tf.keras.applications.MobileNetV3Small
-```
-
-Now we will load the dataset and split it into a training set and a validation set using:
+The dataset can be loaded and split into a training set and a validation set using:
 
 ```python
 (train_ds, val_ds) = tfds.load(name='horses_or_humans', split=['train', 'test'],
                                as_supervised=True, batch_size=32)                           
 ```
 
-The next part is to set the callback object in order to save the Keras model or model weights at some frequency. This can easily be done using [ModelCheckPoint](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint) (check the link for a deeper description of the parameter settings):
-
+Next, we specify the callback that periodically creates a checkpoint of the Keras model with the function [ModelCheckPoint](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint). A verbose description of the parameter setting can be found in the linked documentation of the function.
 
 ```python
 checkpoint = tf.keras.callbacks.ModelCheckpoint(
@@ -57,15 +52,12 @@ checkpoint = tf.keras.callbacks.ModelCheckpoint(
     initial_value_threshold=None,
 )                           
 ```
+The 'filepath' parameter specifies that the model should be saved in a folder 'Saved_Model', which we presume already exists, because we will create it in the next section inside the container. When specifying the name of the saved model, 'Models.{epoch}-{val_loss:.2f}' in our case, it is important to include the .{epoch} part as this will later on be used to inform us on the epoch number when our model gets terminated. We also saved the file using the '.hdf5' extension such that the whole model is contained in a single file. Finally, the callback is triggered every `period=5` epochs.
 
-The 'filepath' parameter specifies where we would like to save our models to. We saved our models to a folder called 'Saved_Model', which we presume already exists. Check out the next section about 'Building a container' where we build a container image that creates this folder such that it is available when we run the script. When specifying the name of the saved model, 'Models.{epoch}-{val_loss:.2f}' in our case, it is important to include the .{epoch} part as this will later on be used to inform us of the epoch number when our model gets terminated. We also saved the file using the '.hdf5' extension such that the whole model is contained in a single file. We also save the model at every 5 epochs (set my parameter 'period').
-
-Next is to check whether a model already exists in the 'Saved_Model' file and to simply resume training from there. We will also use a regular expression to extract the epoch number from the saved file name and then load the model to continue training from the last epoch before termination. 
-
-This can be done in the following way:
+Next we have to check whether a model already exists and potentially resume training from it. If it exists, we extract the epoch number with a regular expression from the filename and then load the model to continue training from this epoch.
 
 ```python
-# If model(s) already exists, continue training
+# If any model(s) exist in Saved_Model, continue training
 if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
 
     # Regular expression pattern to extract epoch number
@@ -77,10 +69,10 @@ if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
 
     # Load model and continue training model from last epoch
     model = load_model(filepath=os.path.join(os.getcwd(), 'Saved_Model', filename))
-    model.fit(x=train_ds, epochs=69, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)                   
+    model.fit(x=train_ds, epochs=70, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)                   
 ```
 
-If no model exists already (i.e no training has been done yet), we simply define our model (MobileNetV3Small in our case) and compile then fit the model to the data for training for 69 (very meaningful number) epochs/iterations.
+If no model exists (i.e no training has been done yet), we simply define our model with the MobileNetV3Small architecture, compile it and then fit it to the data for training for 70 epochs/iterations.
 
 ```python
 else:
@@ -100,24 +92,23 @@ else:
     model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
                   metrics=['accuracy'])
 
-    model.fit(x=train_ds, epochs=69, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=0)               
+    model.fit(x=train_ds, epochs=70, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=0)               
 ```
 
 Now, whenever our training gets interrupted the script will simply refer to the 'Saved_Model' file and just reload the model from where it left off.
 
 Check out the [main.py](https://github.com/Neproxx/cloud-training/blob/main/main.py) in the repository to see the whole training script. We also added a log file in the script to keep track of the training process.
 
-
 ### Building a Docker container
 
-After creating your training script, the next step is to create what is called a 'container'. A container is basically a unit of software that packages up all the code and dependencies required to run your application (in this case the training script). To do this, we will use [Docker](https://www.docker.com/) which is a popular open platform for delivering software applications using containers.
+After creating your training script, the next step is to create what is called a 'container'. A container is a unit of software that packages up all the code and dependencies required to run your application (in this case the training script). To do this, we will use [Docker](https://www.docker.com/) which is a popular open platform for delivering software applications using containers.
 
 Docker consists of two main components:
 
 1. [Docker Engine](https://docs.docker.com/engine/) - This is the packaging tool used to build and run container images (a container is simply a running image)
 2. [Docker Hub](https://docs.docker.com/docker-hub/) - This is a cloud service for sharing your applications (which we will use to download the container image on the VM)
 
-To build the container image, we will have to create what is called a [Dockerfile](https://docs.docker.com/engine/reference/builder/). This is simply a file with a few lines of code that packages up all the required dependencies, libraries etc... in the container image. For our training script, the Dockerfile looks like this:
+To build the container image, we have to create a [Dockerfile](https://docs.docker.com/engine/reference/builder/) which contains the instructions on how to build the container image. For our training script, the Dockerfile looks like this:
 
 
 ```dockerfile
@@ -134,6 +125,7 @@ RUN pip install tensorflow_datasets && \
 CMD ["python", "main.py"]                    
 ```
 
+The individual commands do the following:
 1. Inherits the tensorflow image from Dockerhub as we require tensorflow in our application
 2. Creates and sets the working directory inside the container to the folder '/app'
 3. Copy the required files from our host machine into the '/app' folder (the current working directory) 
