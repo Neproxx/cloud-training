@@ -161,11 +161,11 @@ docker push <hub-user>/<repo-name>:<tag>
 
 
 ### Creating a VM
-Setting up a VM programmatically is useful in production, however since this is a tutorial, it is easier and safer to use the UI in the webbrowser that informs you about prices, etc... Login to the [Azure portal](https://portal.azure.com/) and start the process of creating a VM as shown below.
+After we have built our application, we need to run it on a server. Azure offers to spin up a VM on a server that can host our application. It is possible to do this programmatically, however, since this is a tutorial, it is easier and safer to use the UI in the webbrowser that informs you about prices, etc... Login to the [Azure portal](https://portal.azure.com/) and start creating a VM as shown below.
 
 ![Create VM](./images/01-Azure-tutorial-Create-VM.gif)
 
-First of all, we need to create a resource group that groups all related components of an application together. This is very useful, as many resources will be created implicitly and you will only know about them and find them by investigating the resource group. A VM for example requires disk space and an IP address which both represent implicitly created resources. When you want to delete your application, you can find all of them inside your resource group. We create a resource group named "tutorial-resource-group". If you prefer to choose your own names in this and the following commands, you will have to replace them in the rest of the tutorial as well.
+First of all, we need to create a resource group that groups all related components of an application together. This is very useful, as many resources will be created implicitly and you will only know about them and find them by investigating the resource group. A VM for example requires disk space and an IP address which both represent implicitly created resources. When you want to delete your application, you can find all of them inside your resource group. We create a resource group named "tutorial-resource-group". If you decide to choose your own names, you will have to adapt some of the code later in the tutorial.
 
 ![Create resource group](./images/02-Azure-tutorial-Resource-Group-and-VM-name.gif)
 
@@ -173,33 +173,32 @@ Next up, we need a VM image to run on our new server. For us, it is important th
 
 ![Select correct image](./images/03-Azure-tutorial-Image-selection.gif)
 
-We tick the "spot instance" box and notice that prices go down by 80% to 90%. We can select an eviction policy that is either solely based on capacity, meaning that Azure will terminate our instance when they require the hardware capacity, or also on price. Prices for cloud servers are dynamic and thus it is reasonable to evict a machine once it passes a price threshold. You may set it to for example 0.5$. 
+We tick the "spot instance" box and notice that prices go down by 80% to 90%. We can select an eviction policy that is either solely based on capacity, meaning that Azure will terminate our instance when they require the hardware capacity, or additionally if it exceeds our price limit. Prices for cloud servers are dynamic and thus it is reasonable to evict a machine once it passes a specific price limit. You may set it to 0.5$ for example. 
 
 ![Configure spot instance](./images/04-Azure-tutorial-Spot-Instance-configuration.gif)
 
-Most of our costs will be determined by the server size / hardware we select. In a real use case, we would select a large server size including GPUs in order to speed up model training. For educational purposes however, it is sufficient to select a small server that is covered by Azure's free plan.
+Most of our costs will be determined by the server size / hardware we select. In a real use case, we would select a large server with GPUs in order to speed up model training. For educational purposes however, it is sufficient to select a small server that is covered by Azure's free plan.
 
 ![Select hardware](./images/05-Azure-tutorial-Select-hardware.gif)
 
-Finally, enter a user name and a key pair name for ssh authentication. This will not be needed in the scope of the tutorial, but you could use these credentials to connect to the VM. Click on Review + create and see how your VM instance is created. If you plan on ls
-
+Finally, enter a user name and a key pair name for ssh authentication. This will not be needed in the scope of the tutorial, but you could use these credentials to connect to the VM. Click on Review + create and see how your VM instance is created. If you plan on using ssh, you find instruction on how to connect by navigating to the VM in the azure portal and finding the "connect" tab. This [video](https://youtu.be/3Ecm90UZHv0?t=105) illustrates the process, however, make sure to specify the key path when copying the ssh command as the video author does. You may also use the ssh terminal instead of the Azure CLI in the next section. However, when it comes to starting, orchestrating and terminating instances, you would usually use the Azure CLI.
 
 ![Finish VM creation](./images/06-Azure-tutorial-click-on-create.gif)
 
 ### Setting up the VM
-For managing the VM, we will use the Azure CLI. For this we either need to install it or start a docker container that already has it installed. We do the latter with the command below. 
+In the last section, we have created a VM, but by default it will not do anything. Therefore, we need to download the Docker image we created, start it and tell the VM that in case of a termination and re-boot, it should run the container again. In this tutorial, we use the Azure CLI to do that. You can either install the Azure CLI for your OS or run a docker container that already has it installed. We do the latter by launching such a container with the command below. 
 
 ```console
 docker run -it mcr.microsoft.com/azure-cli bash
 ```
 
-Note that "-it ... bash" tells docker to glue our terminal to the container and start bash inside of it so that we can interact with it. On the other hand "mcr.microsoft.com/azure-cli" is the image name that is provided by Microsoft and downloaded from [dockerhub](https://hub.docker.com/_/microsoft-azure-cli). Once the container is up and running, login by following the instructions inside the terminal. If you plan to login to your VM with ssh, download the private key file. You find instruction on what to do when you navigate to the VM in the Azure portal and click on the "connect" button. However, to execute the rest of the tutorial, you will not need ssh.
+Note that "-it ... bash" tells docker to glue our terminal to the container and start bash inside of it so that we can interact with the container. On the other hand "mcr.microsoft.com/azure-cli" is the image name that is provided by Microsoft and downloaded from [dockerhub](https://hub.docker.com/_/microsoft-azure-cli). Once the container is up and running, login by following the instructions inside the terminal. You may instead run the next few commands directly on the VM via ssh. In that case you would not need to login to Azure, but you would have to adapt the following commands.
 
 ```console
 az login
 ```
 
-Since we are using spot instances, our VM may be shut down or restarted at any point in time. Therefore, we have to make sure that the container always starts on bootup and continues training. We now create an executable script in the folder "/tutorial", which starts the container, as well as a log file in the folder "/models". Replace the image name in the docker container run line with your own image name if you built it yourself and pushed it to dockerhub.
+Since we are using spot instances, our VM may be shut down or restarted at any point in time. Therefore, we have to make sure that the container always starts on bootup and continues training. We now create an executable script in the folder "/tutorial", which starts the container, as well as a log file in the folder "/tutorial/models". Replace the image name in the docker container run line with your own image name if you built it yourself and pushed it to dockerhub.
 
 ```console
 az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-id RunShellScript --scripts "
@@ -214,9 +213,9 @@ EOF
 chmod +x /tutorial/startup-script.sh"
 ```
 
-The syntax cat "<<EOF > file_name ... EOF" below is commonly used to push a multiline string (indicated by "...") into a file. In addition, we need to explicitly tell the os with "chmod +x" that the file is allowed to be executed. We use a -v flag to specify a bind mount. This makes the host folder specified on the left (/tutorial/models) be accessible inside the container under the path stated on the right (/app/Saved_Model). Thus, we can from inside the container store models on the VM machine. Note also that we could login to the VM directly via ssh or install a software to login to the VM with a GUI, however for simplicity we stick to the Azure CLI.
+The syntax "cat <\<EOF > file_name my-script-code EOF" is commonly used to push a multiline string into a file. In addition, we need to explicitly tell the os with "chmod +x" that the file is allowed to be executed. We use a -v flag to create a [bind mount](https://docs.docker.com/storage/bind-mounts/). This makes the host folder specified on the left (/tutorial/models) accessible inside the container under the path stated on the right (/app/Saved_Model). Thus, we can store models under the path "/app/Saved_Model" inside the container and files will appear under "/tutorial/models/" on the VM host. Note that Azure provides an approach within the Webbrowser to execute on a VM which you might prefer. For simplicity we stick to the Azure CLI.
 
-After we have created a script that starts the container, we need to execute it on every bootup. The cronjobs package suits our purposes, as it executes jobs on a periodic schedule. In our case, we specify our schedule with the string "@reboot". Since the syntax can be hard to comprehend, the [crontab-generator] is very useful to generate the cronjob. The script that is executed below can be summarized by "Store all current cronjobs to cron_bkp, add a new cronjob, schedule all the cronjobs that are now in cron_bkp, delete the file cron_bkp". It may be the case that you get the stderr out put "no crontab for root" which you can ignore, because the crontab gets created with this script.
+After we have created a script that starts the container, we need to execute it on every bootup. The cronjobs package suits our purposes, as it executes jobs / scripts on a periodic schedule. In our case, we specify our schedule with the string "@reboot". Since the syntax can be hard to comprehend, the [crontab-generator](https://crontab-generator.org/) is very useful to generate the cronjob. The script that is executed below can be summarized as "Store all current cronjobs to cron_bkp (a temporary file), add a new cronjob to cron_bkp, schedule all the cronjobs that are now in cron_bkp, delete the file cron_bkp". It may be the case that you get the stderr output "no crontab for root" which you can ignore, because the crontab gets created with this script.
 
 ```console
 az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-id RunShellScript --scripts "
@@ -234,7 +233,7 @@ az vm run-command invoke -g tutorial-resource-group -n cloud-training --command-
 /tutorial/startup-script.sh"
 ```
 
-The model is now training. If you want to see the progress live you can login to the server with ssh, check the id for the running container with
+The model is now training. If you want to see the progress live you can login to the server with ssh, find the container's id with
 
 ```console
 docker container ls 
@@ -246,9 +245,7 @@ and then watch the prints of the container (and thus the training progress) with
 docker container logs -f <container-id> 
 ```
 
-If you do not want to do this, just wait 5 minutes to make sure that some training progress was made (at least two epochs of training). We now want to simulate an eviction / termination of the machine. Unlike AWS, Azure does not give us any non-hacky way of automatically restarting the VM after eviction. In order to keep this tutorial simple, we will thus manually restart the VM.
-
-The easiest way to do this is to use the webbrowser UI. You can check the status of the machine by clicking on refresh. The restarting process might take a couple of minutes.
+If you do not want to do this, just wait 5 minutes to make sure that some training progress was made (at least two epochs of training). We now want to simulate an eviction / termination of the machine. Unlike AWS, Azure does not give us any non-hacky way of automatically restarting the VM after eviction. In order to keep this tutorial simple, we will thus manually restart the VM. The easiest way to do this is to use the webbrowser UI. You can check the status of the machine by clicking on refresh. The restarting process might take a couple of minutes.
   
   ![Restarting VM](./images/restart-vm.gif)
 
@@ -269,13 +266,13 @@ We obtain the following output on the Azure CLI:
   
   ![image](https://user-images.githubusercontent.com/102597887/163652531-291b81fe-f073-47b9-bffc-8dfb37c66c90.png)
 
-We can see when the training has begun as well as when training has resumed (after VM termination/restart) and at what Epoch (iterations) number.
+We can see when the training began at 23:15, but at 23:30 training resumed after a restart and began at epoch 11. Thus, training resumed from a checkpoint and does not start from scratch.
 
 ### Cleanup
-Cleaning up our resources is made easy, as we can simply go to resource groups and delete both groups that we find there. It does take a while until Azure has removed all services, so you naturally have to wait 1-3 minutes until everything is gone.
+Cleaning up our resources is important for billing purposes and made easy, as we can simply go to resource groups and delete both groups that we find there. It does take a while until Azure has removed all services, so you naturally have to wait 1-3 minutes until everything is gone.
 
 ![Deleting all resources](./images/delete-resources.gif)
 
 
 ### Further Notes
-In this tutorial, we stored the model on the VM directly. In reality you would prefer to put it in some more persistent cloud storage like an AWS S3 bucket. If you want to use this approach to reduce costs of model training, we advise you to use AWS which is much better suited for it. For example, because it gives you an option to automatically request a new spot instance once resources become available (see [spot requests](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html)). In order to conform with KTH however, we developed this tutorial using Azure.
+In this tutorial, we stored the model on the VM directly. In reality you would prefer to put it in some more persistent cloud storage like an AWS S3 bucket. If you want to use this approach to reduce costs of model training, we advise you to use AWS which is much better suited for it. For example, it gives you an option to automatically request a new spot instance once AWS has capacities available (see [spot requests](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html)). In order to conform with KTH however, we developed this tutorial using Azure.
