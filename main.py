@@ -41,21 +41,35 @@ if len(os.listdir(os.path.join(os.getcwd(), 'Saved_Model'))) > 1:
 
     # Regular expression pattern to extract epoch number
     pattern = '[^0-9]+([0-9]+).+'
-    filename = os.listdir(os.path.join(os.getcwd(), 'Saved_Model'))[-1]
+    filenames = os.listdir(os.path.join(os.getcwd(), 'Saved_Model'))
 
     # Find epoch number
-    last_epoch = int(re.findall(pattern=pattern, string=filename)[0])
+    max_epoch = -1
+    max_epoch_filename = None
+    for filename in filenames:
+        regexp_match_list = re.findall(pattern=pattern, string=filename)
+
+        # If curr file is log.txt no match
+        if len(regexp_match_list) == 0: continue
+
+        last_epoch = int(regexp_match_list[0])
+        if last_epoch > max_epoch:
+            max_epoch = last_epoch
+            max_epoch_filename = filename
+
+    filename = max_epoch_filename
 
     # Update log file
     date_time = str(datetime.datetime.now())
     date_time = date_time[:len(date_time) - 7]
     with open(file=os.path.join(os.getcwd(), 'Saved_Model', 'log.txt'), mode='a') as f:
         f.write('Training has resumed at: ' + date_time + '\n')
-        f.write('Resuming from Epoch Number: ' + str(last_epoch+1) + '\n\n')
+        f.write('Resuming from Epoch Number: ' + str(max_epoch+1) + '\n\n')
 
     # Load model and continue training model from last epoch
-    model = load_model(filepath=os.path.join(os.getcwd(), 'Saved_Model', filename))
-    model.fit(x=train_ds, epochs=50, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)
+    checkpoint_path = os.path.join(os.getcwd(), 'Saved_Model', filename)
+    model = load_model(filepath=checkpoint_path)
+    model.fit(x=train_ds, epochs=50, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=max_epoch)
 
 else:
     model = tf.keras.applications.MobileNetV3Small(
