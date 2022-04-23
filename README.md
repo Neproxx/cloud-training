@@ -57,19 +57,33 @@ The 'filepath' parameter specifies that the model should be saved in a folder 'S
 Next we have to check whether a model already exists and potentially resume training from it. If it exists, we extract the epoch number with a regular expression from the filename and then load the model to continue training from this epoch.
 
 ```python
-# If any model(s) exist in Saved_Model, continue training
+# If model(s) already exists, continue training
 if len(os.listdir(os.path.join(os.getcwd(), 'Saved_Model'))) > 1:
 
     # Regular expression pattern to extract epoch number
     pattern = '[^0-9]+([0-9]+).+'
-    filename = os.listdir(os.path.join(os.getcwd(), 'Saved_Model'))[-1]
+    filenames = os.listdir(os.path.join(os.getcwd(), 'Saved_Model'))
 
     # Find epoch number
-    last_epoch = int(re.findall(pattern=pattern, string=filename)[0])
+    max_epoch = -1
+    max_epoch_filename = None
+    for filename in filenames:
+        regexp_match_list = re.findall(pattern=pattern, string=filename)
+
+        # If curr file is log.txt no match
+        if len(regexp_match_list) == 0: continue
+
+        last_epoch = int(regexp_match_list[0])
+        if last_epoch > max_epoch:
+            max_epoch = last_epoch
+            max_epoch_filename = filename
+
+    filename = max_epoch_filename
 
     # Load model and continue training model from last epoch
-    model = load_model(filepath=os.path.join(os.getcwd(), 'Saved_Model', filename))
-    model.fit(x=train_ds, epochs=70, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=last_epoch)                   
+    checkpoint_path = os.path.join(os.getcwd(), 'Saved_Model', filename)
+    model = load_model(filepath=checkpoint_path)
+    model.fit(x=train_ds, epochs=70, validation_data=val_ds, callbacks=[checkpoint], initial_epoch=max_epoch)                  
 ```
 
 If no model exists (i.e no training has been done yet), we simply define our model with the MobileNetV3Small architecture, compile it and then fit it to the data for training for 70 epochs/iterations.
