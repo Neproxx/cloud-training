@@ -58,7 +58,7 @@ Next we have to check whether a model already exists and potentially resume trai
 
 ```python
 # If any model(s) exist in Saved_Model, continue training
-if os.listdir(os.path.join(os.getcwd(), 'Saved_Model')):
+if len(os.listdir(os.path.join(os.getcwd(), 'Saved_Model'))) > 1:
 
     # Regular expression pattern to extract epoch number
     pattern = '[^0-9]+([0-9]+).+'
