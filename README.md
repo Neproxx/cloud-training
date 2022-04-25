@@ -13,7 +13,7 @@ The tutorial consists of six subsections:
 5. Model Training
 6. Cleanup
 
-You have the option to write the Python code and containerize it yourself. If you want to do that, we recommend using the [Docker Playground](https://www.katacoda.com/courses/docker/playground) on Katacoda. Otherwise, you may use our already built Docker images for running on the VM and start actively engaging the tutorial from section 3 - Creating a Virtual Machine on Azure.
+You have the option to write the Python code and containerize it yourself. If you want to do that, we recommend using the [Docker Playground](https://www.katacoda.com/courses/docker/playground) on Katacoda. Otherwise, you may use our already built Docker images for running on the VM and start actively engaging the tutorial from section 3 - Creating a Virtual Machine on Azure. The tutorial consists of parts that are executed in a terminal (Katacoda recommended) and direct interaction with the Azure portal UI. 
 
 ### Creating a training script with checkpointing
 
