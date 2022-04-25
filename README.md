@@ -251,7 +251,7 @@ docker container logs -f <container-id>
 
 If you do not want to do this, just wait 5 minutes to make sure that some training progress was made (at least two epochs of training). We now want to simulate an eviction / termination of the machine. Unlike AWS, Azure does not give us any non-hacky way of automatically restarting the VM after eviction. In order to keep this tutorial simple, we will thus manually restart the VM. The easiest way to do this is to use the webbrowser UI. You can check the status of the machine by clicking on refresh. The restarting process might take a couple of minutes.
   
-  ![Restarting VM](./images/restart-vm.gif)
+  ![Restarting VM](./images/restart-vm-retsae-gge.gif)
 
 Alternatively, you can use the Azure CLI:
 
